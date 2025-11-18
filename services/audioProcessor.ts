@@ -1,8 +1,12 @@
 import { SrtEntry, AudioFile, ProcessReport, ConfigOptions, DurationMode } from '../types';
 import { t } from '../localization/vi';
 
-// Make FFmpeg available in the component. The library is loaded from a CDN in `index.html`.
-declare const FFmpeg: any;
+// Make FFmpeg globally available via the window object. This is how scripts loaded from a CDN are accessed.
+declare global {
+    interface Window {
+        FFmpeg: any;
+    }
+}
 
 /**
  * Converts a File object to a Uint8Array.
@@ -39,6 +43,11 @@ export const processAndMergeAudio = async (
     updateProgress: (message: string, percent: number) => void
 ): Promise<{ blob: Blob | null; report: ProcessReport }> => {
 
+    // **FIX**: Check if the FFmpeg library has been loaded from the CDN before using it.
+    if (!window.FFmpeg || !window.FFmpeg.FFmpeg) {
+        throw new Error("FFmpeg library could not be loaded. Please ensure you are connected to the internet and try refreshing the page.");
+    }
+
     const report: ProcessReport = {
         mergedTracks: [],
         missingFiles: [],
@@ -64,8 +73,10 @@ export const processAndMergeAudio = async (
     if (filesToProcess.length === 0) {
         throw new Error(srtData.length > 0 ? t.errors.noMatchingFiles : "No audio files were provided.");
     }
-
-    const ffmpeg = new FFmpeg.FFmpeg();
+    
+    // **FIX**: Destructure FFmpeg from the window object to ensure correct scope.
+    const { FFmpeg } = window.FFmpeg;
+    const ffmpeg = new FFmpeg();
     let totalDuration = 0;
 
     // FFmpeg log callback for progress reporting.

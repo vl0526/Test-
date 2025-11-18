@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI-Powered SRT Audio Merger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FFmpeg.wasm for in-browser audio/video processing -->
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+    <style>
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+
+      :root, .theme-dark {
+          --bg-primary: #0f172a;
+          --bg-secondary: rgba(30, 41, 59, 0.5);
+          --text-primary: #cbd5e1;
+          --text-secondary: #94a3b8;
+          --text-tertiary: #e2e8f0;
+          --border-color: #334155;
+          --accent-color: #22d3ee;
+          --accent-color-hover: #67e8f9;
+          --accent-text-color: #0f172a;
+          --accent-gradient-from: #22d3ee;
+          --accent-gradient-to: #3b82f6;
+          --button-disabled-bg: #475569;
+          --button-disabled-text: #94a3b8;
+          --success-color: #4ade80;
+          --success-bg: #22c55e;
+          --success-bg-hover: #4ade80;
+          --success-text-color: #0f172a;
+          --warning-color: #facc15;
+          --error-bg: rgba(127, 29, 29, 0.5);
+          --error-border: #7f1d1d;
+          --error-text: #fca5a5;
+          --input-bg: #334155;
+          --input-bg-hover: #475569;
+          --input-border: #475569;
+          --progress-bar-bg: #22d3ee;
+          --progress-track-bg: #334155;
+          --bg-image: none;
+      }
+      .theme-light {
+          --bg-primary: #f1f5f9;
+          --bg-secondary: #ffffff;
+          --text-primary: #1e293b;
+          --text-secondary: #475569;
+          --text-tertiary: #0f172a;
+          --border-color: #cbd5e1;
+          --accent-color: #2563eb;
+          --accent-color-hover: #3b82f6;
+          --accent-text-color: #ffffff;
+          --accent-gradient-from: #2563eb;
+          --accent-gradient-to: #60a5fa;
+          --button-disabled-bg: #e2e8f0;
+          --button-disabled-text: #94a3b8;
+          --success-color: #16a34a;
+          --success-bg: #22c55e;
+          --success-bg-hover: #4ade80;
+          --success-text-color: #ffffff;
+          --warning-color: #ca8a04;
+          --error-bg: rgba(220, 38, 38, 0.1);
+          --error-border: #fca5a5;
+          --error-text: #b91c1c;
+          --input-bg: #e2e8f0;
+          --input-bg-hover: #cbd5e1;
+          --input-border: #cbd5e1;
+          --progress-bar-bg: #2563eb;
+          --progress-track-bg: #e2e8f0;
+          --bg-image: none;
+      }
+      .theme-sunset {
+          --bg-primary: #1a1a2e;
+          --bg-secondary: rgba(26, 26, 46, 0.6);
+          --text-primary: #f0f0f0;
+          --text-secondary: #e0e0e0;
+          --text-tertiary: #ffffff;
+          --border-color: rgba(253, 160, 133, 0.4);
+          --accent-color: #f6d365;
+          --accent-color-hover: #f8e194;
+          --accent-text-color: #1a1a2e;
+          --accent-gradient-from: #f6d365;
+          --accent-gradient-to: #fda085;
+          --button-disabled-bg: rgba(26, 26, 46, 0.5);
+          --button-disabled-text: #a0a0a0;
+          --success-color: #a8e063;
+          --success-bg: #56ab2f;
+          --success-bg-hover: #a8e063;
+          --success-text-color: #1a1a2e;
+          --warning-color: #f6d365;
+          --error-bg: rgba(231, 76, 60, 0.3);
+          --error-border: #e74c3c;
+          --error-text: #f0f0f0;
+          --input-bg: rgba(26, 26, 46, 0.8);
+          --input-bg-hover: rgba(40, 40, 60, 0.8);
+          --input-border: rgba(253, 160, 133, 0.6);
+          --progress-bar-bg: #f6d365;
+          --progress-track-bg: rgba(26, 26, 46, 0.8);
+          --bg-image: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+      }
+      .theme-peter-shower {
+          --bg-primary: #10102c;
+          --bg-secondary: rgba(51, 8, 103, 0.3);
+          --text-primary: #d1d5db;
+          --text-secondary: #9ca3af;
+          --text-tertiary: #f3f4f6;
+          --border-color: rgba(76, 29, 149, 0.8);
+          --accent-color: #a78bfa;
+          --accent-color-hover: #c4b5fd;
+          --accent-text-color: #1e1b4b;
+          --accent-gradient-from: #a78bfa;
+          --accent-gradient-to: #30cfd0;
+          --button-disabled-bg: rgba(51, 8, 103, 0.4);
+          --button-disabled-text: #9ca3af;
+          --success-color: #6ee7b7;
+          --success-bg: #10b981;
+          --success-bg-hover: #34d399;
+          --success-text-color: #1e1b4b;
+          --warning-color: #fcd34d;
+          --error-bg: rgba(225, 29, 72, 0.3);
+          --error-border: #be185d;
+          --error-text: #fda4af;
+          --input-bg: rgba(51, 8, 103, 0.5);
+          --input-bg-hover: rgba(67, 30, 112, 0.5);
+          --input-border: rgba(76, 29, 149, 0.8);
+          --progress-bar-bg: #a78bfa;
+          --progress-track-bg: rgba(51, 8, 103, 0.5);
+          --bg-image: linear-gradient(to top, #30cfd0 0%, #330867 100%);
+      }
+      .theme-beautiful-universe {
+          --bg-primary: #000000;
+          --bg-secondary: rgba(23, 23, 39, 0.7);
+          --text-primary: #ffffff;
+          --text-secondary: #cccccc;
+          --text-tertiary: #ffffff;
+          --border-color: rgba(76, 29, 149, 0.7);
+          --accent-color: #c084fc;
+          --accent-color-hover: #d8b4fe;
+          --accent-text-color: #1e1b4b;
+          --accent-gradient-from: #c084fc;
+          --accent-gradient-to: #2dd4bf;
+          --button-disabled-bg: rgba(23, 23, 39, 0.6);
+          --button-disabled-text: #9ca3af;
+          --success-color: #4ade80;
+          --success-bg: #22c55e;
+          --success-bg-hover: #4ade80;
+          --success-text-color: #1e1b4b;
+          --warning-color: #facc15;
+          --error-bg: rgba(225, 29, 72, 0.3);
+          --error-border: #be185d;
+          --error-text: #fda4af;
+          --input-bg: rgba(23, 23, 39, 0.8);
+          --input-bg-hover: rgba(40, 40, 60, 0.8);
+          --input-border: rgba(76, 29, 149, 0.8);
+          --progress-bar-bg: #c084fc;
+          --progress-track-bg: rgba(23, 23, 39, 0.8);
+          --bg-image: none;
+      }
+
+      body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        transition: background-color 0.5s ease, color 0.5s ease;
+      }
+
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%;
+        height: 100vh;
+        background-image: var(--bg-image);
+        z-index: -1;
+        background-attachment: fixed;
+        transition: opacity 0.5s ease;
+        opacity: 1;
+      }
+
+      @keyframes move-stars {
+        from { background-position: 0 0; }
+        to { background-position: -10000px 5000px; }
+      }
+
+      .theme-beautiful-universe body::before {
+        background-image:
+          radial-gradient(1px 1px at 20px 30px, #eee, rgba(0,0,0,0)),
+          radial-gradient(1px 1px at 40px 70px, #fff, rgba(0,0,0,0)),
+          radial-gradient(1px 1px at 50px 160px, #ddd, rgba(0,0,0,0)),
+          radial-gradient(1px 1px at 90px 40px, #fff, rgba(0,0,0,0)),
+          radial-gradient(2px 2px at 160px 100px, #fff, rgba(0,0,0,0)),
+          radial-gradient(2px 2px at 120px 140px, #ddd, rgba(0,0,0,0));
+        background-repeat: repeat;
+        background-size: 200px 200px;
+        animation: move-stars 200s linear infinite;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
